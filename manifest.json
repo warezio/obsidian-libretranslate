@@ -1,0 +1,11 @@
+{
+  "id": "obsidian-libretranslate",
+  "name": "LibreTranslate for Obsidian",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Translate notes using LibreTranslate API",
+  "main": "main.js",
+  "author": "Jiho",
+  "authorUrl": "https://github.com/jiholee",
+  "isDesktopOnly": false
+}

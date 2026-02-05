@@ -1,0 +1,26 @@
+{
+  "name": "obsidian-libretranslate",
+  "version": "1.0.0",
+  "description": "Translate Obsidian notes using LibreTranslate API",
+  "main": "main.ts",
+  "scripts": {
+    "dev": "obsidian-plugin dev",
+    "build": "obsidian-plugin build"
+  },
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "translation",
+    "translate",
+    "libretranslate"
+  ],
+  "author": "Jiho",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "builtin-modules": "^3.3.0",
+    "obsidian": "latest",
+    "tslib": "^2.6.0",
+    "typescript": "^5.3.0"
+  }
+}
