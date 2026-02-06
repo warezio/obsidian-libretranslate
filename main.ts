@@ -21,34 +21,43 @@ export default class LibreTranslatePlugin extends Plugin {
         await this.loadSettings();
         this.addSettingTab(new LibreTranslateSettingTab(this.app, this));
 
-        // Command Registration: Current Note Translation
+        // Register command: Translate current note
         this.addCommand({
             id: "translate-current-note",
             name: "Translate current note",
-            checkCallback: () => this.isEditorActive(),
-            callback: () => this.translateCurrentNote(),
+            checkCallback: (checking) => {
+                if (checking) return this.isEditorActive();
+                this.translateCurrentNote();
+                return true;
+            },
         });
 
-        // Command Registration: Translate Selected Text
+        // Register command: Translate selection
         this.addCommand({
             id: "translate-selection",
             name: "Translate selection",
-            checkCallback: () => this.isEditorActive() && this.hasSelection(),
-            callback: () => this.translateSelection(),
+            checkCallback: (checking) => {
+                if (checking)
+                    return this.isEditorActive() && this.hasSelection();
+                this.translateSelection();
+                return true;
+            },
         });
 
-        // Add Ribbon Icon (optional)
-        this.addRibbonIcon("translate", "Translate current note");
+        // Add ribbon icon
+        this.addRibbonIcon("languages", "Translate current note", () => {
+            this.translateCurrentNote();
+        });
     }
 
     async translateCurrentNote() {
-        const activeView = this.app.workspace.getActiveViewOfType("markdown");
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!activeView) {
             new Notice("No active markdown view");
             return;
         }
 
-        const content = (activeView as any).editor.getValue();
+        const content = activeView.editor.getValue();
         if (!content) {
             new Notice("Note is empty");
             return;
@@ -58,10 +67,10 @@ export default class LibreTranslatePlugin extends Plugin {
     }
 
     async translateSelection() {
-        const activeView = this.app.workspace.getActiveViewOfType("markdown");
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!activeView) return;
 
-        const selection = (activeView as any).editor.getSelection();
+        const selection = activeView.editor.getSelection();
         if (!selection) {
             new Notice("No text selected");
             return;
@@ -76,11 +85,11 @@ export default class LibreTranslatePlugin extends Plugin {
 
             const translated = await this.callLibreTranslate(text);
 
-            // Append the translation result after the current caret position
+            // Add translation result after current caret
             const activeView =
-                this.app.workspace.getActiveViewOfType("markdown");
+                this.app.workspace.getActiveViewOfType(MarkdownView);
             if (activeView) {
-                (activeView as any).editor.replaceSelection(
+                activeView.editor.replaceSelection(
                     `\n\n[Translated]\n${translated}\n\n`,
                 );
             }
@@ -118,13 +127,24 @@ export default class LibreTranslatePlugin extends Plugin {
     }
 
     isEditorActive(): boolean {
-        const activeView = this.app.workspace.getActiveViewOfType("markdown");
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
         return !!activeView;
     }
 
     hasSelection(): boolean {
-        const activeView = this.app.workspace.getActiveViewOfType("markdown");
-        return !!activeView && !!(activeView as any).editor.getSelection();
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        return !!activeView && !!activeView.editor.getSelection();
+    }
+
+    async loadSettings() {
+        const data = await this.loadData();
+        if (data) {
+            this.config = Object.assign(this.config, data);
+        }
+    }
+
+    async saveSettings() {
+        await this.saveData(this.config);
     }
 
     onunload() {

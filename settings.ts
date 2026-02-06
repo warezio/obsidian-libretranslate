@@ -20,22 +20,29 @@ export default class LibreTranslateSettingTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName("API URL")
             .setDesc("Your LibreTranslate server URL")
-            .addText((text) => text.setValue("https://libretranslate.com"))
-            .setPlaceholder("https://libretranslate.com")
-            .onChange(async (value) => {
-                this.plugin.config.apiUrl = value;
-                await this.plugin.saveSettings();
-            });
+            .addText((text) =>
+                text
+                    .setValue(this.plugin.config.apiUrl)
+                    .setPlaceholder("https://libretranslate.com")
+                    .onChange(async (value) => {
+                        this.plugin.config.apiUrl = value;
+                        await this.plugin.saveSettings();
+                    }),
+            );
 
         // API Key Setting (Optional)
         new Setting(containerEl)
             .setName("API Key")
             .setDesc("Optional: Leave empty for public server")
-            .addText((text) => text.setPlaceholder("Optional"))
-            .onChange(async (value) => {
-                this.plugin.config.apiKey = value;
-                await this.plugin.saveSettings();
-            });
+            .addText((text) =>
+                text
+                    .setValue(this.plugin.config.apiKey || "")
+                    .setPlaceholder("Optional")
+                    .onChange(async (value) => {
+                        this.plugin.config.apiKey = value || undefined;
+                        await this.plugin.saveSettings();
+                    }),
+            );
 
         // Source Language
         new Setting(containerEl)
@@ -43,13 +50,13 @@ export default class LibreTranslateSettingTab extends PluginSettingTab {
             .setDesc("Language to translate from")
             .addDropdown((dropdown) =>
                 dropdown
-                    .addOptions([
-                        { value: "auto", label: "Auto-detect" },
-                        { value: "en", label: "English" },
-                        { value: "ko", label: "Korean" },
-                        { value: "ja", label: "Japanese" },
-                        { value: "zh", label: "Chinese" },
-                    ])
+                    .addOptions({
+                        auto: "Auto-detect",
+                        en: "English",
+                        ko: "Korean",
+                        ja: "Japanese",
+                        zh: "Chinese",
+                    })
                     .setValue(this.plugin.config.sourceLang || "auto")
                     .onChange(async (value) => {
                         this.plugin.config.sourceLang = value;
@@ -63,15 +70,15 @@ export default class LibreTranslateSettingTab extends PluginSettingTab {
             .setDesc("Language to translate to")
             .addDropdown((dropdown) =>
                 dropdown
-                    .addOptions([
-                        { value: "en", label: "English" },
-                        { value: "ko", label: "Korean" },
-                        { value: "ja", label: "Japanese" },
-                        { value: "zh", label: "Chinese" },
-                        { value: "es", label: "Spanish" },
-                        { value: "fr", label: "French" },
-                        { value: "de", label: "German" },
-                    ])
+                    .addOptions({
+                        en: "English",
+                        ko: "Korean",
+                        ja: "Japanese",
+                        zh: "Chinese",
+                        es: "Spanish",
+                        fr: "French",
+                        de: "German",
+                    })
                     .setValue(this.plugin.config.targetLang || "en")
                     .onChange(async (value) => {
                         this.plugin.config.targetLang = value;
