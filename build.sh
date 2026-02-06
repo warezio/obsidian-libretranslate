@@ -1,21 +1,21 @@
 #!/bin/bash
 
-# Obsidian 플러그인 빌드 스크립트
+# Obsidian Plugin Build Script
 
-echo "🔨 빌드 시작..."
+echo "🔨 Build started..."
 
-# TypeScript 컴파일
+# TypeScript Compilation
 npx tsc
 
-# 번들링
+# Bundling
 npx esbuild main.ts --bundle --outfile=dist/main.js --format=cjs --external=obsidian
 
-# manifest.json 복사
+# Copy manifest.json
 cp manifest.json dist/
 
-# styles.css 생성 (비어 있음)
+# Create styles.css (empty)
 echo "" > dist/styles.css
 
-echo "✅ 빌드 완료!"
-echo "📁 dist/ 폴더 내용:"
+echo "✅ Build completed!"
+echo "📁 Contents of dist/ folder:"
 ls -la dist/

@@ -1,108 +1,113 @@
 class LibreTranslatePlugin {
-  constructor() {
-    this.app = null;
-    this.config = {
-      apiUrl: 'https://libretranslate.com',
-      apiKey: '',
-      sourceLang: 'auto',
-      targetLang: 'en'
-    };
-  }
-
-  init(app, manifest) {
-    this.app = app;
-    this.manifest = manifest;
-
-    // 명령 등록
-    app.addCommand({
-      id: 'translate-current-note',
-      name: 'LibreTranslate: Translate current note',
-      callback: () => this.translateCurrentNote(),
-    });
-
-    app.addCommand({
-      id: 'translate-selection',
-      name: 'LibreTranslate: Translate selection',
-      callback: () => this.translateSelection(),
-    });
-
-    // 리본 아이콘
-    app.addRibbonIcon('translate', 'Translate');
-  }
-
-  async translateCurrentNote() {
-    const activeView = this.app.workspace.getActiveViewOfType('markdown');
-    if (!activeView) {
-      new obsidian.Notice('No active markdown view');
-      return;
+    constructor() {
+        this.app = null;
+        this.config = {
+            apiUrl: "https://libretranslate.com",
+            apiKey: "",
+            sourceLang: "auto",
+            targetLang: "en",
+        };
     }
 
-    const content = activeView.editor.getValue();
-    if (!content) {
-      new obsidian.Notice('Note is empty');
-      return;
+    init(app, manifest) {
+        this.app = app;
+        this.manifest = manifest;
+
+        // Commands
+        app.addCommand({
+            id: "translate-current-note",
+            name: "LibreTranslate: Translate current note",
+            callback: () => this.translateCurrentNote(),
+        });
+
+        app.addCommand({
+            id: "translate-selection",
+            name: "LibreTranslate: Translate selection",
+            callback: () => this.translateSelection(),
+        });
+
+        // Ribbon Icon
+        app.addRibbonIcon("translate", "Translate");
     }
 
-    await this.translateContent(content);
-  }
+    async translateCurrentNote() {
+        const activeView = this.app.workspace.getActiveViewOfType("markdown");
+        if (!activeView) {
+            new obsidian.Notice("No active markdown view");
+            return;
+        }
 
-  async translateSelection() {
-    const activeView = this.app.workspace.getActiveViewOfType('markdown');
-    if (!activeView) return;
+        const content = activeView.editor.getValue();
+        if (!content) {
+            new obsidian.Notice("Note is empty");
+            return;
+        }
 
-    const selection = activeView.editor.getSelection();
-    if (!selection) {
-      new obsidian.Notice('No text selected');
-      return;
+        await this.translateContent(content);
     }
 
-    await this.translateContent(selection);
-  }
+    async translateSelection() {
+        const activeView = this.app.workspace.getActiveViewOfType("markdown");
+        if (!activeView) return;
 
-  async translateContent(text) {
-    try {
-      new obsidian.Notice('Translating...');
+        const selection = activeView.editor.getSelection();
+        if (!selection) {
+            new obsidian.Notice("No text selected");
+            return;
+        }
 
-      const translated = await this.callLibreTranslate(text);
-
-      const activeView = this.app.workspace.getActiveViewOfType('markdown');
-      if (activeView) {
-        activeView.editor.replaceSelection(`\n\n[Translated]\n${translated}\n\n`);
-      }
-
-      new obsidian.Notice('Translation complete!');
-    } catch (error) {
-      console.error('Translation error:', error);
-      new obsidian.Notice(`Translation failed: ${error.message}`);
-    }
-  }
-
-  async callLibreTranslate(text) {
-    const response = await obsidian.requestUrl({
-      url: `${this.config.apiUrl}/translate`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.config.apiKey ? { 'Authorization': `Bearer ${this.config.apiKey}` } : {}),
-      },
-      body: JSON.stringify({
-        q: text,
-        source: this.config.sourceLang,
-        target: this.config.targetLang,
-        format: 'text',
-      }),
-    });
-
-    if (!response.json || !response.json.translatedText) {
-      throw new Error('Invalid response from LibreTranslate');
+        await this.translateContent(selection);
     }
 
-    return response.json.translatedText;
-  }
+    async translateContent(text) {
+        try {
+            new obsidian.Notice("Translating...");
+
+            const translated = await this.callLibreTranslate(text);
+
+            const activeView =
+                this.app.workspace.getActiveViewOfType("markdown");
+            if (activeView) {
+                activeView.editor.replaceSelection(
+                    `\n\n[Translated]\n${translated}\n\n`,
+                );
+            }
+
+            new obsidian.Notice("Translation complete!");
+        } catch (error) {
+            console.error("Translation error:", error);
+            new obsidian.Notice(`Translation failed: ${error.message}`);
+        }
+    }
+
+    async callLibreTranslate(text) {
+        const response = await obsidian.requestUrl({
+            url: `${this.config.apiUrl}/translate`,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(this.config.apiKey
+                    ? { Authorization: `Bearer ${this.config.apiKey}` }
+                    : {}),
+            },
+            body: JSON.stringify({
+                q: text,
+                source: this.config.sourceLang,
+                target: this.config.targetLang,
+                format: "text",
+            }),
+        });
+
+        if (!response.json || !response.json.translatedText) {
+            throw new Error("Invalid response from LibreTranslate");
+        }
+
+        return response.json.translatedText;
+    }
 }
 
-// 플러그인 메인
+// Plugin Main
 const plugin = new LibreTranslatePlugin();
-window.addEventListener('DOMContentLoaded', () => {
-  plugin.init(obsidian.app, obsidian.manifest);
+window.addEventListener("DOMContentLoaded", () => {
+    plugin.init(obsidian.app, obsidian.manifest);
 });
