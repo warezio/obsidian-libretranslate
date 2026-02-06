@@ -1,21 +1,15 @@
 #!/bin/bash
 
-# Obsidian Plugin Build Script
+# Obsidian plugin build script
 
-echo "🔨 Build started..."
+echo "🔨 Building..."
 
-# TypeScript Compilation
-npx tsc
-
-# Bundling
-npx esbuild main.ts --bundle --outfile=dist/main.js --format=cjs --external=obsidian
-
-# Copy manifest.json
-cp manifest.json dist/
+# Bundle with esbuild
+npx esbuild main.ts --bundle --outfile=main.js --format=cjs --external:obsidian
 
 # Create styles.css (empty)
-echo "" > dist/styles.css
+echo "" > styles.css
 
-echo "✅ Build completed!"
-echo "📁 Contents of dist/ folder:"
-ls -la dist/
+echo "✅ Build complete!"
+echo "📁 Output files:"
+ls -la main.js manifest.json styles.css
