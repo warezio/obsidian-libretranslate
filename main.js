@@ -187,6 +187,27 @@ var SplitTranslatorPlugin = class extends import_obsidian3.Plugin {
     this.addRibbonIcon("languages", "Translate current note", () => {
       this.translateCurrentNote();
     });
+    this.app.workspace.onLayoutReady(() => {
+      this.app.workspace.iterateAllLeaves((leaf) => {
+        if (leaf.view instanceof import_obsidian3.MarkdownView) {
+          this.addHeaderButton(leaf.view);
+        }
+      });
+    });
+    this.registerEvent(
+      this.app.workspace.on("active-leaf-change", (leaf) => {
+        if (leaf && leaf.view instanceof import_obsidian3.MarkdownView) {
+          this.addHeaderButton(leaf.view);
+        }
+      })
+    );
+  }
+  addHeaderButton(view) {
+    if (view.containerEl.querySelector(".translator-header-button")) return;
+    const button = view.addAction("languages", "Translate current note", () => {
+      this.translateCurrentNote();
+    });
+    button.addClass("translator-header-button");
   }
   async translateCurrentNote() {
     const activeView = this.app.workspace.getActiveViewOfType(import_obsidian3.MarkdownView);

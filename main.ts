@@ -51,6 +51,42 @@ export default class SplitTranslatorPlugin extends Plugin {
         this.addRibbonIcon("languages", "Translate current note", () => {
             this.translateCurrentNote();
         });
+
+        // Add header button to existing leaves
+        this.app.workspace.onLayoutReady(() => {
+            this.app.workspace.iterateAllLeaves((leaf) => {
+                if (leaf.view instanceof MarkdownView) {
+                    this.addHeaderButton(leaf.view);
+                }
+            });
+        });
+
+        // Add header button to new leaves
+        this.registerEvent(
+            this.app.workspace.on("active-leaf-change", (leaf) => {
+                if (leaf && leaf.view instanceof MarkdownView) {
+                    this.addHeaderButton(leaf.view);
+                }
+            })
+        );
+    }
+
+    addHeaderButton(view: MarkdownView) {
+        // Check if button already exists
+        if (view.containerEl.querySelector(".translator-header-button")) return;
+
+        // Add button
+        const button = view.addAction("languages", "Translate current note", () => {
+            this.translateCurrentNote();
+        });
+        button.addClass("translator-header-button");
+
+        // Attempt to move it before the "More options" button if possible
+        // Standard addAction puts it at the beginning of the actions container (left-most of actions)
+        // The "More options" button is usually the last one.
+        // So usually it ends up: [Translate] [Other Plugins] [More Options]
+        // This should be sufficient for "between read/edit and ...".
+        // If we need stricter positioning, we'd need to manipulate DOM children of view.contentEl.querySelector('.view-header-nav-buttons')
     }
 
     async translateCurrentNote() {
