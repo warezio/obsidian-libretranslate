@@ -1,7 +1,7 @@
 {
-    "name": "obsidian-libretranslate",
+    "name": "obsidian-split-translator",
     "version": "1.0.0",
-    "description": "Translate Obsidian notes using LibreTranslate API",
+    "description": "Translate Obsidian notes using Google Translate (unofficial)",
     "main": "main.js",
     "scripts": {
         "dev": "esbuild main.ts --bundle --outfile=main.js --format=cjs --external:obsidian --watch",
@@ -12,7 +12,7 @@
         "plugin",
         "translation",
         "translate",
-        "libretranslate"
+        "google-translate"
     ],
     "author": "Jiho",
     "license": "MIT",

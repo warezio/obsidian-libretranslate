@@ -1,13 +1,13 @@
 import { Plugin, Notice, requestUrl, MarkdownView, WorkspaceLeaf } from "obsidian";
-import LibreTranslateSettingTab from "./settings";
-import { LibreTranslateView, VIEW_TYPE_LIBRETRANSLATE } from "./view";
+import TranslatorSettingTab from "./settings";
+import { TranslationView, VIEW_TYPE_TRANSLATOR } from "./view";
 
 interface TranslatorConfig {
     sourceLang: string;
     targetLang: string;
 }
 
-export default class LibreTranslatePlugin extends Plugin {
+export default class SplitTranslatorPlugin extends Plugin {
     config: TranslatorConfig = {
         sourceLang: "auto",
         targetLang: "en",
@@ -16,11 +16,11 @@ export default class LibreTranslatePlugin extends Plugin {
     async onload() {
         console.log("Translator Plugin loaded");
         await this.loadSettings();
-        this.addSettingTab(new LibreTranslateSettingTab(this.app, this));
+        this.addSettingTab(new TranslatorSettingTab(this.app, this));
 
         this.registerView(
-            VIEW_TYPE_LIBRETRANSLATE,
-            (leaf) => new LibreTranslateView(leaf)
+            VIEW_TYPE_TRANSLATOR,
+            (leaf) => new TranslationView(leaf)
         );
 
         // Register command: Translate current note
@@ -99,7 +99,7 @@ export default class LibreTranslatePlugin extends Plugin {
         }
     }
 
-    async streamTranslation(text: string, view: LibreTranslateView) {
+    async streamTranslation(text: string, view: TranslationView) {
         const CHUNK_SIZE = 5000;
         
         // 1. Mask code blocks before splitting
@@ -163,23 +163,23 @@ export default class LibreTranslatePlugin extends Plugin {
 
 
 
-    async openTranslationView(content: string): Promise<LibreTranslateView | null> {
+    async openTranslationView(content: string): Promise<TranslationView | null> {
         const { workspace } = this.app;
         
         let leaf: WorkspaceLeaf | null = null;
-        const leaves = workspace.getLeavesOfType(VIEW_TYPE_LIBRETRANSLATE);
+        const leaves = workspace.getLeavesOfType(VIEW_TYPE_TRANSLATOR);
         
         if (leaves.length > 0) {
             leaf = leaves[0];
         } else {
             leaf = workspace.getLeaf('split', 'vertical');
             await leaf.setViewState({
-                type: VIEW_TYPE_LIBRETRANSLATE,
+                type: VIEW_TYPE_TRANSLATOR,
                 active: true,
             });
         }
         
-        if (leaf && leaf.view instanceof LibreTranslateView) {
+        if (leaf && leaf.view instanceof TranslationView) {
             workspace.revealLeaf(leaf);
             leaf.view.update(content);
             this.syncScroll(leaf.view);
@@ -188,7 +188,7 @@ export default class LibreTranslatePlugin extends Plugin {
         return null;
     }
 
-    syncScroll(targetView: LibreTranslateView) {
+    syncScroll(targetView: TranslationView) {
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!activeView) return;
 
@@ -198,7 +198,7 @@ export default class LibreTranslatePlugin extends Plugin {
         
         // @ts-ignore - access internal cm editor
         const editorScrollDom = activeView.contentEl.querySelector(".cm-scroller") as HTMLElement; 
-        const targetScrollDom = targetView.containerEl.children[1] as HTMLElement;
+        const targetScrollDom = targetView.contentEl;
 
         if (editorScrollDom && targetScrollDom) {
             const handleScroll = () => {

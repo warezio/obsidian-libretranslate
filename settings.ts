@@ -1,10 +1,10 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import LibreTranslatePlugin from "./main";
+import SplitTranslatorPlugin from "./main";
 
-export default class LibreTranslateSettingTab extends PluginSettingTab {
-    plugin: LibreTranslatePlugin;
+export default class TranslatorSettingTab extends PluginSettingTab {
+    plugin: SplitTranslatorPlugin;
 
-    constructor(app: App, plugin: LibreTranslatePlugin) {
+    constructor(app: App, plugin: SplitTranslatorPlugin) {
         super(app, plugin);
         this.plugin = plugin;
     }

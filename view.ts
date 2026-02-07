@@ -1,8 +1,8 @@
 import { ItemView, WorkspaceLeaf, MarkdownRenderer } from "obsidian";
 
-export const VIEW_TYPE_LIBRETRANSLATE = "libretranslate-view";
+export const VIEW_TYPE_TRANSLATOR = "translator-view";
 
-export class LibreTranslateView extends ItemView {
+export class TranslationView extends ItemView {
     content: string = "";
     loadingEl: HTMLElement | null = null;
     contentElWrapper: HTMLElement | null = null;
@@ -12,7 +12,7 @@ export class LibreTranslateView extends ItemView {
     }
 
     getViewType() {
-        return VIEW_TYPE_LIBRETRANSLATE;
+        return VIEW_TYPE_TRANSLATOR;
     }
 
     getDisplayText() {
@@ -24,12 +24,12 @@ export class LibreTranslateView extends ItemView {
     }
 
     async onOpen() {
-        const container = this.containerEl.children[1] as HTMLElement;
+        const container = this.contentEl;
         container.empty();
         container.createEl("h4", { text: "Translation" });
         
         // Create a dedicated content wrapper
-        this.contentElWrapper = container.createDiv({ cls: "libretranslate-content" });
+        this.contentElWrapper = container.createDiv({ cls: "translator-content" });
     }
 
     async onClose() {
@@ -37,11 +37,11 @@ export class LibreTranslateView extends ItemView {
     }
 
     showLoading(isLoading: boolean) {
-        const container = this.containerEl.children[1] as HTMLElement;
+        const container = this.contentEl;
         
         if (isLoading) {
             if (!this.loadingEl) {
-                this.loadingEl = container.createDiv({ cls: "libretranslate-loading" });
+                this.loadingEl = container.createDiv({ cls: "translator-loading" });
                 this.loadingEl.setText("Translating... ");
                 
                 // Add a simple spinner CSS if not available
@@ -63,9 +63,9 @@ export class LibreTranslateView extends ItemView {
                 this.loadingEl.style.color = "var(--text-muted)";
 
                  // Add keyframes for spinner if needed
-                 if (!document.getElementById("libretranslate-spinner-style")) {
+                 if (!document.getElementById("translator-spinner-style")) {
                     const style = document.createElement("style");
-                    style.id = "libretranslate-spinner-style";
+                    style.id = "translator-spinner-style";
                     style.innerHTML = `
                         @keyframes spin {
                             from { transform: rotate(0deg); }
@@ -77,7 +77,7 @@ export class LibreTranslateView extends ItemView {
             }
         } else {
             if (this.loadingEl) {
-                this.loadingEl.remove();
+                this.loadingEl.detach();
                 this.loadingEl = null;
             }
         }
@@ -87,8 +87,8 @@ export class LibreTranslateView extends ItemView {
         this.content = content;
         
         if (!this.contentElWrapper) {
-             const container = this.containerEl.children[1] as HTMLElement;
-             this.contentElWrapper = container.createDiv({ cls: "libretranslate-content" });
+             const container = this.contentEl;
+             this.contentElWrapper = container.createDiv({ cls: "translator-content" });
         }
 
         this.contentElWrapper.empty();

@@ -1,9 +1,9 @@
 {
-    "id": "obsidian-libretranslate",
-    "name": "LibreTranslate for Obsidian",
+    "id": "obsidian-split-translator",
+    "name": "Split Translator",
     "version": "1.0.0",
     "minAppVersion": "1.5.0",
-    "description": "Translate notes using LibreTranslate API",
+    "description": "Translate notes using Google Translate (unofficial).",
     "main": "main.js",
     "author": "Jiho",
     "authorUrl": "https://github.com/warezio",

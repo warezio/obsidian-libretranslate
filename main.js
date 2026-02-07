@@ -19,14 +19,14 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // main.ts
 var main_exports = {};
 __export(main_exports, {
-  default: () => LibreTranslatePlugin
+  default: () => SplitTranslatorPlugin
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian3 = require("obsidian");
 
 // settings.ts
 var import_obsidian = require("obsidian");
-var LibreTranslateSettingTab = class extends import_obsidian.PluginSettingTab {
+var TranslatorSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -66,8 +66,8 @@ var LibreTranslateSettingTab = class extends import_obsidian.PluginSettingTab {
 
 // view.ts
 var import_obsidian2 = require("obsidian");
-var VIEW_TYPE_LIBRETRANSLATE = "libretranslate-view";
-var LibreTranslateView = class extends import_obsidian2.ItemView {
+var VIEW_TYPE_TRANSLATOR = "translator-view";
+var TranslationView = class extends import_obsidian2.ItemView {
   constructor(leaf) {
     super(leaf);
     this.content = "";
@@ -75,7 +75,7 @@ var LibreTranslateView = class extends import_obsidian2.ItemView {
     this.contentElWrapper = null;
   }
   getViewType() {
-    return VIEW_TYPE_LIBRETRANSLATE;
+    return VIEW_TYPE_TRANSLATOR;
   }
   getDisplayText() {
     return "Translation";
@@ -84,18 +84,18 @@ var LibreTranslateView = class extends import_obsidian2.ItemView {
     return "languages";
   }
   async onOpen() {
-    const container = this.containerEl.children[1];
+    const container = this.contentEl;
     container.empty();
     container.createEl("h4", { text: "Translation" });
-    this.contentElWrapper = container.createDiv({ cls: "libretranslate-content" });
+    this.contentElWrapper = container.createDiv({ cls: "translator-content" });
   }
   async onClose() {
   }
   showLoading(isLoading) {
-    const container = this.containerEl.children[1];
+    const container = this.contentEl;
     if (isLoading) {
       if (!this.loadingEl) {
-        this.loadingEl = container.createDiv({ cls: "libretranslate-loading" });
+        this.loadingEl = container.createDiv({ cls: "translator-loading" });
         this.loadingEl.setText("Translating... ");
         const spinner = this.loadingEl.createDiv({ cls: "spinner" });
         spinner.style.display = "inline-block";
@@ -111,9 +111,9 @@ var LibreTranslateView = class extends import_obsidian2.ItemView {
         this.loadingEl.style.padding = "10px";
         this.loadingEl.style.fontStyle = "italic";
         this.loadingEl.style.color = "var(--text-muted)";
-        if (!document.getElementById("libretranslate-spinner-style")) {
+        if (!document.getElementById("translator-spinner-style")) {
           const style = document.createElement("style");
-          style.id = "libretranslate-spinner-style";
+          style.id = "translator-spinner-style";
           style.innerHTML = `
                         @keyframes spin {
                             from { transform: rotate(0deg); }
@@ -125,7 +125,7 @@ var LibreTranslateView = class extends import_obsidian2.ItemView {
       }
     } else {
       if (this.loadingEl) {
-        this.loadingEl.remove();
+        this.loadingEl.detach();
         this.loadingEl = null;
       }
     }
@@ -133,8 +133,8 @@ var LibreTranslateView = class extends import_obsidian2.ItemView {
   async update(content) {
     this.content = content;
     if (!this.contentElWrapper) {
-      const container = this.containerEl.children[1];
-      this.contentElWrapper = container.createDiv({ cls: "libretranslate-content" });
+      const container = this.contentEl;
+      this.contentElWrapper = container.createDiv({ cls: "translator-content" });
     }
     this.contentElWrapper.empty();
     await import_obsidian2.MarkdownRenderer.render(
@@ -148,7 +148,7 @@ var LibreTranslateView = class extends import_obsidian2.ItemView {
 };
 
 // main.ts
-var LibreTranslatePlugin = class extends import_obsidian3.Plugin {
+var SplitTranslatorPlugin = class extends import_obsidian3.Plugin {
   constructor() {
     super(...arguments);
     this.config = {
@@ -159,10 +159,10 @@ var LibreTranslatePlugin = class extends import_obsidian3.Plugin {
   async onload() {
     console.log("Translator Plugin loaded");
     await this.loadSettings();
-    this.addSettingTab(new LibreTranslateSettingTab(this.app, this));
+    this.addSettingTab(new TranslatorSettingTab(this.app, this));
     this.registerView(
-      VIEW_TYPE_LIBRETRANSLATE,
-      (leaf) => new LibreTranslateView(leaf)
+      VIEW_TYPE_TRANSLATOR,
+      (leaf) => new TranslationView(leaf)
     );
     this.addCommand({
       id: "translate-current-note",
@@ -263,17 +263,17 @@ var LibreTranslatePlugin = class extends import_obsidian3.Plugin {
   async openTranslationView(content) {
     const { workspace } = this.app;
     let leaf = null;
-    const leaves = workspace.getLeavesOfType(VIEW_TYPE_LIBRETRANSLATE);
+    const leaves = workspace.getLeavesOfType(VIEW_TYPE_TRANSLATOR);
     if (leaves.length > 0) {
       leaf = leaves[0];
     } else {
       leaf = workspace.getLeaf("split", "vertical");
       await leaf.setViewState({
-        type: VIEW_TYPE_LIBRETRANSLATE,
+        type: VIEW_TYPE_TRANSLATOR,
         active: true
       });
     }
-    if (leaf && leaf.view instanceof LibreTranslateView) {
+    if (leaf && leaf.view instanceof TranslationView) {
       workspace.revealLeaf(leaf);
       leaf.view.update(content);
       this.syncScroll(leaf.view);
@@ -285,7 +285,7 @@ var LibreTranslatePlugin = class extends import_obsidian3.Plugin {
     const activeView = this.app.workspace.getActiveViewOfType(import_obsidian3.MarkdownView);
     if (!activeView) return;
     const editorScrollDom = activeView.contentEl.querySelector(".cm-scroller");
-    const targetScrollDom = targetView.containerEl.children[1];
+    const targetScrollDom = targetView.contentEl;
     if (editorScrollDom && targetScrollDom) {
       const handleScroll = () => {
         const percentage = editorScrollDom.scrollTop / (editorScrollDom.scrollHeight - editorScrollDom.clientHeight);
