@@ -22,7 +22,7 @@ __export(main_exports, {
   default: () => LibreTranslatePlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 
 // settings.ts
 var import_obsidian = require("obsidian");
@@ -34,19 +34,7 @@ var LibreTranslateSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "LibreTranslate Settings" });
-    new import_obsidian.Setting(containerEl).setName("API URL").setDesc("Your LibreTranslate server URL").addText(
-      (text) => text.setValue(this.plugin.config.apiUrl).setPlaceholder("https://libretranslate.com").onChange(async (value) => {
-        this.plugin.config.apiUrl = value;
-        await this.plugin.saveSettings();
-      })
-    );
-    new import_obsidian.Setting(containerEl).setName("API Key").setDesc("Optional: Leave empty for public server").addText(
-      (text) => text.setValue(this.plugin.config.apiKey || "").setPlaceholder("Optional").onChange(async (value) => {
-        this.plugin.config.apiKey = value || void 0;
-        await this.plugin.saveSettings();
-      })
-    );
+    containerEl.createEl("h2", { text: "Translator Settings" });
     new import_obsidian.Setting(containerEl).setName("Source Language").setDesc("Language to translate from").addDropdown(
       (dropdown) => dropdown.addOptions({
         auto: "Auto-detect",
@@ -76,26 +64,112 @@ var LibreTranslateSettingTab = class extends import_obsidian.PluginSettingTab {
   }
 };
 
+// view.ts
+var import_obsidian2 = require("obsidian");
+var VIEW_TYPE_LIBRETRANSLATE = "libretranslate-view";
+var LibreTranslateView = class extends import_obsidian2.ItemView {
+  constructor(leaf) {
+    super(leaf);
+    this.content = "";
+    this.loadingEl = null;
+    this.contentElWrapper = null;
+  }
+  getViewType() {
+    return VIEW_TYPE_LIBRETRANSLATE;
+  }
+  getDisplayText() {
+    return "Translation";
+  }
+  getIcon() {
+    return "languages";
+  }
+  async onOpen() {
+    const container = this.containerEl.children[1];
+    container.empty();
+    container.createEl("h4", { text: "Translation" });
+    this.contentElWrapper = container.createDiv({ cls: "libretranslate-content" });
+  }
+  async onClose() {
+  }
+  showLoading(isLoading) {
+    const container = this.containerEl.children[1];
+    if (isLoading) {
+      if (!this.loadingEl) {
+        this.loadingEl = container.createDiv({ cls: "libretranslate-loading" });
+        this.loadingEl.setText("Translating... ");
+        const spinner = this.loadingEl.createDiv({ cls: "spinner" });
+        spinner.style.display = "inline-block";
+        spinner.style.width = "10px";
+        spinner.style.height = "10px";
+        spinner.style.border = "2px solid currentColor";
+        spinner.style.borderRightColor = "transparent";
+        spinner.style.borderRadius = "50%";
+        spinner.style.animation = "spin 1s linear infinite";
+        spinner.style.marginLeft = "10px";
+        this.loadingEl.style.display = "flex";
+        this.loadingEl.style.alignItems = "center";
+        this.loadingEl.style.padding = "10px";
+        this.loadingEl.style.fontStyle = "italic";
+        this.loadingEl.style.color = "var(--text-muted)";
+        if (!document.getElementById("libretranslate-spinner-style")) {
+          const style = document.createElement("style");
+          style.id = "libretranslate-spinner-style";
+          style.innerHTML = `
+                        @keyframes spin {
+                            from { transform: rotate(0deg); }
+                            to { transform: rotate(360deg); }
+                        }
+                    `;
+          document.head.appendChild(style);
+        }
+      }
+    } else {
+      if (this.loadingEl) {
+        this.loadingEl.remove();
+        this.loadingEl = null;
+      }
+    }
+  }
+  async update(content) {
+    this.content = content;
+    if (!this.contentElWrapper) {
+      const container = this.containerEl.children[1];
+      this.contentElWrapper = container.createDiv({ cls: "libretranslate-content" });
+    }
+    this.contentElWrapper.empty();
+    await import_obsidian2.MarkdownRenderer.render(
+      this.app,
+      content,
+      this.contentElWrapper,
+      "/",
+      this
+    );
+  }
+};
+
 // main.ts
-var LibreTranslatePlugin = class extends import_obsidian2.Plugin {
+var LibreTranslatePlugin = class extends import_obsidian3.Plugin {
   constructor() {
     super(...arguments);
     this.config = {
-      apiUrl: "https://libretranslate.com",
-      apiKey: void 0,
       sourceLang: "auto",
       targetLang: "en"
     };
   }
   async onload() {
-    console.log("LibreTranslate Plugin loaded");
+    console.log("Translator Plugin loaded");
     await this.loadSettings();
     this.addSettingTab(new LibreTranslateSettingTab(this.app, this));
+    this.registerView(
+      VIEW_TYPE_LIBRETRANSLATE,
+      (leaf) => new LibreTranslateView(leaf)
+    );
     this.addCommand({
       id: "translate-current-note",
       name: "Translate current note",
       checkCallback: (checking) => {
         if (checking) return this.isEditorActive();
+        console.log("Command: Translate current note triggered");
         this.translateCurrentNote();
         return true;
       }
@@ -115,75 +189,147 @@ var LibreTranslatePlugin = class extends import_obsidian2.Plugin {
     });
   }
   async translateCurrentNote() {
-    const activeView = this.app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
+    const activeView = this.app.workspace.getActiveViewOfType(import_obsidian3.MarkdownView);
     if (!activeView) {
-      new import_obsidian2.Notice("No active markdown view");
+      new import_obsidian3.Notice("No active markdown view");
       return;
     }
     const content = activeView.editor.getValue();
     if (!content) {
-      new import_obsidian2.Notice("Note is empty");
+      new import_obsidian3.Notice("Note is empty");
       return;
     }
     await this.translateContent(content);
   }
   async translateSelection() {
-    const activeView = this.app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
+    const activeView = this.app.workspace.getActiveViewOfType(import_obsidian3.MarkdownView);
     if (!activeView) return;
     const selection = activeView.editor.getSelection();
     if (!selection) {
-      new import_obsidian2.Notice("No text selected");
+      new import_obsidian3.Notice("No text selected");
       return;
     }
     await this.translateContent(selection);
   }
   async translateContent(text) {
+    console.log("translateContent started, length:", text.length);
     try {
-      new import_obsidian2.Notice("Translating...");
-      const translated = await this.callLibreTranslate(text);
-      const activeView = this.app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
-      if (activeView) {
-        activeView.editor.replaceSelection(
-          `
-
-[Translated]
-${translated}
-
-`
-        );
-      }
-      new import_obsidian2.Notice("Translation complete!");
+      const view = await this.openTranslationView("");
+      if (!view) return;
+      await this.streamTranslation(text, view);
+      new import_obsidian3.Notice("Translation complete!");
     } catch (error) {
       console.error("Translation error:", error);
-      new import_obsidian2.Notice(`Translation failed: ${error.message}`);
+      new import_obsidian3.Notice(`Translation failed: ${error.message}`);
     }
   }
-  async callLibreTranslate(text) {
-    const response = await (0, import_obsidian2.requestUrl)({
-      url: `${this.config.apiUrl}/translate`,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...this.config.apiKey ? { Authorization: `Bearer ${this.config.apiKey}` } : {}
-      },
-      body: JSON.stringify({
-        q: text,
-        source: this.config.sourceLang,
-        target: this.config.targetLang,
-        format: "text"
-      })
-    });
-    if (!response.json || !response.json.translatedText) {
-      throw new Error("Invalid response from LibreTranslate");
+  async streamTranslation(text, view) {
+    const CHUNK_SIZE = 5e3;
+    const masker = new MarkdownMasker();
+    const maskedText = masker.mask(text);
+    const paragraphs = maskedText.split("\n\n");
+    const chunks = [];
+    let currentChunk = "";
+    for (const paragraph of paragraphs) {
+      if (currentChunk.length + paragraph.length > CHUNK_SIZE && currentChunk.length > 0) {
+        chunks.push(currentChunk);
+        currentChunk = "";
+      }
+      if (currentChunk.length > 0) {
+        currentChunk += "\n\n";
+      }
+      currentChunk += paragraph;
     }
-    return response.json.translatedText;
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk);
+    }
+    console.log(`Starting streaming translation of ${chunks.length} chunks`);
+    view.showLoading(true);
+    let accumulatedTranslation = "";
+    try {
+      for (let i = 0; i < chunks.length; i++) {
+        console.log(`Processing chunk ${i + 1}/${chunks.length}`);
+        let chunkResult = await this.callGoogleTranslate(chunks[i]);
+        chunkResult = masker.unmask(chunkResult);
+        if (accumulatedTranslation.length > 0) accumulatedTranslation += "\n\n";
+        accumulatedTranslation += chunkResult;
+        view.update(accumulatedTranslation);
+      }
+    } finally {
+      view.showLoading(false);
+    }
+    console.log("All chunks translated and streamed");
+  }
+  async openTranslationView(content) {
+    const { workspace } = this.app;
+    let leaf = null;
+    const leaves = workspace.getLeavesOfType(VIEW_TYPE_LIBRETRANSLATE);
+    if (leaves.length > 0) {
+      leaf = leaves[0];
+    } else {
+      leaf = workspace.getLeaf("split", "vertical");
+      await leaf.setViewState({
+        type: VIEW_TYPE_LIBRETRANSLATE,
+        active: true
+      });
+    }
+    if (leaf && leaf.view instanceof LibreTranslateView) {
+      workspace.revealLeaf(leaf);
+      leaf.view.update(content);
+      this.syncScroll(leaf.view);
+      return leaf.view;
+    }
+    return null;
+  }
+  syncScroll(targetView) {
+    const activeView = this.app.workspace.getActiveViewOfType(import_obsidian3.MarkdownView);
+    if (!activeView) return;
+    const editorScrollDom = activeView.contentEl.querySelector(".cm-scroller");
+    const targetScrollDom = targetView.containerEl.children[1];
+    if (editorScrollDom && targetScrollDom) {
+      const handleScroll = () => {
+        const percentage = editorScrollDom.scrollTop / (editorScrollDom.scrollHeight - editorScrollDom.clientHeight);
+        if (isFinite(percentage)) {
+          targetScrollDom.scrollTop = percentage * (targetScrollDom.scrollHeight - targetScrollDom.clientHeight);
+        }
+      };
+      editorScrollDom.addEventListener("scroll", handleScroll);
+    }
+  }
+  async callGoogleTranslate(text) {
+    console.log("Calling Google API with text length:", text.length);
+    const encodedText = encodeURIComponent(text);
+    const source = this.config.sourceLang;
+    const target = this.config.targetLang;
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${source}&tl=${target}&dt=t&q=${encodedText}`;
+    try {
+      const response = await (0, import_obsidian3.requestUrl)({
+        url,
+        method: "GET",
+        // Google uses GET
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+      });
+      if (response.status !== 200) {
+        throw new Error(`Google API returned status ${response.status}`);
+      }
+      const data = response.json;
+      if (Array.isArray(data) && Array.isArray(data[0])) {
+        return data[0].map((item) => item[0]).join("");
+      }
+      throw new Error("Invalid response format from Google");
+    } catch (error) {
+      console.error("Google Translate error:", error);
+      throw error;
+    }
   }
   isEditorActive() {
-    const activeView = this.app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
+    const activeView = this.app.workspace.getActiveViewOfType(import_obsidian3.MarkdownView);
     return !!activeView;
   }
   hasSelection() {
-    const activeView = this.app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
+    const activeView = this.app.workspace.getActiveViewOfType(import_obsidian3.MarkdownView);
     return !!activeView && !!activeView.editor.getSelection();
   }
   async loadSettings() {
@@ -196,6 +342,34 @@ ${translated}
     await this.saveData(this.config);
   }
   onunload() {
-    console.log("LibreTranslate Plugin unloaded");
+    console.log("Translator Plugin unloaded");
+  }
+};
+var MarkdownMasker = class {
+  constructor() {
+    this.replacements = [];
+  }
+  mask(text) {
+    this.replacements = [];
+    text = text.replace(/```[\s\S]*?```/g, (match) => {
+      const placeholder = `__CODE_BLOCK_${this.replacements.length}__`;
+      this.replacements.push(match);
+      return placeholder;
+    });
+    text = text.replace(/`[^`]+`/g, (match) => {
+      const placeholder = `__INLINE_CODE_${this.replacements.length}__`;
+      this.replacements.push(match);
+      return placeholder;
+    });
+    return text;
+  }
+  unmask(text) {
+    return text.replace(/__(CODE_BLOCK|INLINE_CODE)_(\d+)__/g, (match, type, index) => {
+      const idx = parseInt(index);
+      if (idx >= 0 && idx < this.replacements.length) {
+        return this.replacements[idx];
+      }
+      return match;
+    });
   }
 };

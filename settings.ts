@@ -14,35 +14,7 @@ export default class LibreTranslateSettingTab extends PluginSettingTab {
 
         containerEl.empty();
 
-        containerEl.createEl("h2", { text: "LibreTranslate Settings" });
-
-        // API URL Setting
-        new Setting(containerEl)
-            .setName("API URL")
-            .setDesc("Your LibreTranslate server URL")
-            .addText((text) =>
-                text
-                    .setValue(this.plugin.config.apiUrl)
-                    .setPlaceholder("https://libretranslate.com")
-                    .onChange(async (value) => {
-                        this.plugin.config.apiUrl = value;
-                        await this.plugin.saveSettings();
-                    }),
-            );
-
-        // API Key Setting (Optional)
-        new Setting(containerEl)
-            .setName("API Key")
-            .setDesc("Optional: Leave empty for public server")
-            .addText((text) =>
-                text
-                    .setValue(this.plugin.config.apiKey || "")
-                    .setPlaceholder("Optional")
-                    .onChange(async (value) => {
-                        this.plugin.config.apiKey = value || undefined;
-                        await this.plugin.saveSettings();
-                    }),
-            );
+        containerEl.createEl("h2", { text: "Translator Settings" });
 
         // Source Language
         new Setting(containerEl)
